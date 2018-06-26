@@ -43,7 +43,9 @@ data FHomo f a b = FHomo
   , lower  :: a -> b
   }
 
--- | 準同型写像はある`Functor f`と`a -> b`から定義できる
+-- |
+-- スマートコンストラクタ。
+-- 準同型写像はある`Functor f`と`a -> b`から定義される
 homo :: Functor f => (a -> b) -> FHomo f a b
 homo f = FHomo
           { higher = fmap f
@@ -69,13 +71,12 @@ homoLaw :: forall f a b. (Functor f, Eq b)
             -> FAlgebra f b -- ^ `f b -> b`
             -> Bool
 homoLaw FHomo{..} fa FAlgebra{morph = downToA} FAlgebra{morph = downToB} =
-  let overWay  = downToA >>> lower   :: f a -> b
-      underWay = higher  >>> downToB :: f a -> b
+  let overWay  = lower . downToA  :: f a -> b
+      underWay = downToB . higher :: f a -> b
   in overWay fa == underWay fa
 
 main :: IO ()
-main = do
-  putStrLn $ "is homoCharInt a homomorphism?: " <> show isHomoCharIntHomo
+main = putStrLn $ "is homoCharInt a homomorphism?: " <> show isHomoCharIntHomo
   where
     isHomoCharIntHomo :: Bool
     isHomoCharIntHomo = homoLaw homoCharInt (Just 'a') fMaybeChar fMaybeInt
