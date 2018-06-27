@@ -2,6 +2,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 
 import Control.Arrow ((>>>))
 import Data.Char (ord)
@@ -13,8 +14,11 @@ data FAlgebra f a = FAlgebra
   , morph  :: f a -> a
   }
 
--- | (Maybe Char, Char)のF-代数
-fMaybeChar :: FAlgebra Maybe Char
+-- | あるMaybe-代数aを表す型
+type MaybeAlgebra = FAlgebra Maybe
+
+-- | (Maybe Char -> Char, Char)のMaybe-代数
+fMaybeChar :: MaybeAlgebra Char
 fMaybeChar = FAlgebra
               { object = 'a'
               , morph  = f
@@ -24,8 +28,8 @@ fMaybeChar = FAlgebra
       Nothing -> '0'
       Just a  -> a
 
--- | (Maybe Int -> Int, Int)のF-代数
-fMaybeInt :: FAlgebra Maybe Int
+-- | (Maybe Int -> Int, Int)のMaybe-代数
+fMaybeInt :: MaybeAlgebra Int
 fMaybeInt = FAlgebra
              { object = 10
              , morph  = f
@@ -52,14 +56,22 @@ homo f = FHomo
           , lower  = f
           }
 
+-- | MaybeAlgebra aとMaybeAlgebra bへの間の準同型写像を表す型
+type MaybeHomo a b = FHomo Maybe a b
+
 -- |
 -- fmap fと合わせて
--- FAlgebra Maybe Char から FAlgebra Maybe Int への準同型
-homoCharInt :: FHomo Maybe Char Int
+-- MaybeAlgebra Char から MaybeAlgebra Int への準同型
+homoCharInt :: MaybeHomo Char Int
 homoCharInt = homo f
   where
     f :: Char -> Int
     f = ord
+
+type a ~~> b = MaybeHomo a b
+
+-- homoCharInt :: Char ~~> Int
+-- homoCharInt = ...
 
 -- |
 -- `FHomo f a b`の満たすべき法則
@@ -74,6 +86,13 @@ homoLaw FHomo{..} fa FAlgebra{morph = downToA} FAlgebra{morph = downToB} =
   let overWay  = lower . downToA  :: f a -> b
       underWay = downToB . higher :: f a -> b
   in overWay fa == underWay fa
+
+-- | Maybe-代数への特殊化
+maybeHomoLaw :: Eq b
+                  => MaybeHomo a b -> Maybe a
+                  -> MaybeAlgebra a -> MaybeAlgebra b
+                  -> Bool
+maybeHomoLaw = homoLaw
 
 main :: IO ()
 main = putStrLn $ "is homoCharInt a homomorphism?: " <> show isHomoCharIntHomo
