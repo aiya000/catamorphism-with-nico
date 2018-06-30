@@ -1,4 +1,5 @@
-{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -10,26 +11,21 @@
 -- MaybeをfとしたMaybe-代数について。
 module Main where
 
-import Control.Arrow ((>>>))
 import Data.Char (ord)
 import Data.Semigroup ((<>))
+import Prelude hiding (length)
 
--- |
--- あるfに対するf-代数(a, f a -> a)。
--- 表現の都合上a -> fの依存性があるが、本質には関係ない。
-class Functor f => FAlgebra f a | a -> f where
-  raw  :: a        -- ^ あるaの値（なんでもいい）
+-- | あるfに対するf-代数(a, f a -> a)の表現
+class Functor f => FAlgebra f a where
   down :: f a -> a -- ^ あるf a -> aの値（なんでもいい）
 
 -- | (Maybe Char -> Char, Char)のMaybe-代数
 instance FAlgebra Maybe Int where
-  raw = 10
   down (Just x) = x
   down Nothing  = 20
 
 -- | (Maybe Char -> Char, Char)のMaybe-代数
 instance FAlgebra Maybe Char where
-  raw = 'a'
   down (Just x) = x
   down Nothing  = 'x'
 
@@ -39,7 +35,7 @@ data FHomo f a b = FHomo
   , lower  :: a -> b
   }
 
--- | 準同型写像はある`Functor f`と`a -> b`から定義できる
+-- | 準同型写像はある`Functor f`と`a -> b`から導出できる
 fhomo :: Functor f => (a -> b) -> FHomo f a b
 fhomo f = FHomo
             { higher = fmap f
@@ -64,6 +60,32 @@ homoLaw FHomo{..} fa =
   let overWay  = lower . down   :: f a -> b
       underWay = down  . higher :: f a -> b
   in overWay fa == underWay fa
+
+-- |
+-- f-始代数。
+-- あるfについてのf-代数とその準同型写像は圏を為す。
+-- `Fix`はちょうどその始対象になる。
+-- 始対象になるので、任意の対象(a, f a -> a)に対して射がちょうど1つずつある。
+-- （各射がちょうど1つずつあることについてはここで扱わない。扱えない？）
+newtype Fix f = Fix
+  { unFix :: f (Fix f)
+  }
+
+-- | Maybe-始代数
+instance FAlgebra Maybe (Fix Maybe) where
+  down :: Maybe (Fix Maybe) -> Fix Maybe
+  down = Fix
+
+-- | f-始代数から任意のf-代数への射
+homoFixToA :: forall f a. FAlgebra f a => FHomo f (Fix f) a
+homoFixToA = fhomo f
+  where
+    f :: Fix f -> a
+    f (Fix x) = down $ fmap f x
+
+-- | 実はそのhomoFixToAがちょうどcatamorphismです（ドドーン！！）
+cata :: FAlgebra f a => FHomo f (Fix f) a
+cata = homoFixToA
 
 main :: IO ()
 main = putStrLn $ "is homoCharToInt a homomorphism?: " <> show isHomoCharIntHomo
