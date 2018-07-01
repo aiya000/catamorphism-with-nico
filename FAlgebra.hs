@@ -87,8 +87,48 @@ homoFixToA = fhomo f
 cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
 
+-- |
+-- `Cons 10 (Cons 20 (Cons 30 Nil)) :: List' Int (List' Int (List' Int b))`
+-- のように、型も繰り返すようなリスト型
+data List' a b = Nil | Cons a b
+
+instance Functor (List' a) where
+   fmap f x = case x of
+     Nil      -> Nil
+     Cons a b -> Cons a (f b)
+
+-- | `List' a`-代数(Int, List' a Int -> Int)
+instance FAlgebra (List' a) Int where
+  down :: List' a Int -> Int
+  down Nil = 0
+  down (Cons _ n) = n + 1
+
+-- | `[] :: [a]`と同じようなもの
+nil :: Fix (List' a)
+nil = Fix Nil
+
+-- | `(:) :: a -> [a] -> [a]`と同じようなもの
+cons :: a -> Fix (List' a) -> Fix (List' a)
+cons x xs = Fix $ Cons x xs
+
+-- |
+-- catamorphismを用いた、あるaに対する`List' a`向けのlengthの実装。
+-- そしてあるaに対する`List' a`-始代数`Fix (List' a)`から
+-- `List' a`-代数(Int, List' a Int -> Int)への準同型写像でもある。
+-- （例えばaがIntなら`List' Int`-始代数から`List' Int`-代数への準同型写像）
+length :: FHomo (List' a) (Fix (List' a)) Int
+length = cata
+
+nested' :: List' Int (List' Int (List' Int (List' Int b)))
+nested' = Cons 10 (Cons 20 (Cons 30 Nil))
+
+flat' :: Fix (List' Int)
+flat' = cons 10 (cons 20 (cons 30 nil)) :: Fix (List' Int)
+
 main :: IO ()
-main = putStrLn $ "is homoCharToInt a homomorphism?: " <> show isHomoCharIntHomo
+main = do
+  putStrLn $ "is homoCharToInt a homomorphism?: " <> show isHomoCharIntHomo
+  putStrLn $ "the length of `flat'` is " <> show  (lower length flat')
   where
     isHomoCharIntHomo :: Bool
     isHomoCharIntHomo = homoLaw homoCharToInt (Just 'a')
