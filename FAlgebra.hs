@@ -87,6 +87,32 @@ homoFixToA = fhomo f
 cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
 
+-- | `Nothing :: Maybe a`と同じようなもの
+nothing :: Fix Maybe
+nothing = Fix Nothing
+
+-- | `Just :: a -> Maybe a`と同じようなもの
+just :: Fix Maybe -> Fix Maybe
+just x = Fix $ Just x
+
+-- | ある再帰したMaybe
+nested :: Maybe (Maybe (Maybe Int))
+nested = Just (Just Nothing)
+
+-- |
+-- Recursion schemeの醍醐味。
+-- Fixはnestedの型のような、再帰した型をまとめることができる。
+flat :: Fix Maybe
+flat = just (just nothing)
+
+-- |
+-- Maybe-始代数(Fix Maybe, Maybe (Fix Maybe) -> Fix Maybe)は置いておいて、
+-- Maybe-代数(Int, Maybe Int -> Int)の`down Nothing`の値を取得する関数。
+-- そしてMaybe-始代数(Fix Maybe, Maybe (Fix Maybe) -> Fix Maybe)から
+-- Maybe-代数(Int, Maybe Int -> Int)への準同型写像でもある。
+core :: FHomo Maybe (Fix Maybe) Int
+core = cata
+
 -- |
 -- `Cons 10 (Cons 20 (Cons 30 Nil)) :: List' Int (List' Int (List' Int b))`
 -- のように、型も繰り返すようなリスト型
@@ -128,6 +154,7 @@ flat' = cons 10 (cons 20 (cons 30 nil)) :: Fix (List' Int)
 main :: IO ()
 main = do
   putStrLn $ "is homoCharToInt a homomorphism?: " <> show isHomoCharIntHomo
+  putStrLn $ "the `down Nothing :: Maybe Int -> Int` value is " <> show (lower core flat)
   putStrLn $ "the length of `flat'` is " <> show  (lower length flat')
   where
     isHomoCharIntHomo :: Bool
