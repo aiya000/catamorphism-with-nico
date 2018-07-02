@@ -8,7 +8,6 @@
 
 -- |
 -- あるFunctor fに対する、緩いf-代数の表現と、
--- MaybeをfとしたMaybe-代数について。
 module Main where
 
 import Data.Char (ord)
@@ -18,16 +17,6 @@ import Prelude hiding (length)
 -- | あるfに対するf-代数(a, f a -> a)の表現
 class Functor f => FAlgebra f a where
   down :: f a -> a -- ^ あるf a -> aの値（なんでもいい）
-
--- | (Maybe Char -> Char, Char)のMaybe-代数
-instance FAlgebra Maybe Int where
-  down (Just x) = x
-  down Nothing  = 20
-
--- | (Maybe Char -> Char, Char)のMaybe-代数
-instance FAlgebra Maybe Char where
-  down (Just x) = x
-  down Nothing  = 'x'
 
 -- | f-代数aからf-代数bへの準同型写像
 data FHomo f a b = FHomo
@@ -41,13 +30,6 @@ fhomo f = FHomo
             { higher = fmap f
             , lower  = f
             }
-
--- | Maybe-代数Char から Maybe-代数Int への準同型
-homoCharToInt :: FHomo Maybe Char Int
-homoCharToInt = fhomo f
-  where
-    f :: Char -> Int
-    f = ord
 
 -- |
 -- `FHomo f a b`の満たすべき法則
@@ -71,11 +53,6 @@ newtype Fix f = Fix
   { unFix :: f (Fix f)
   }
 
--- | Maybe-始代数
-instance FAlgebra Maybe (Fix Maybe) where
-  down :: Maybe (Fix Maybe) -> Fix Maybe
-  down = Fix
-
 -- | f-始代数から任意のf-代数への射
 homoFixToA :: forall f a. FAlgebra f a => FHomo f (Fix f) a
 homoFixToA = fhomo f
@@ -86,32 +63,6 @@ homoFixToA = fhomo f
 -- | 実はそのhomoFixToAがちょうどcatamorphismです（ドドーン！！）
 cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
-
--- | `Nothing :: Maybe a`と同じようなもの
-nothing :: Fix Maybe
-nothing = Fix Nothing
-
--- | `Just :: a -> Maybe a`と同じようなもの
-just :: Fix Maybe -> Fix Maybe
-just x = Fix $ Just x
-
--- | ある再帰したMaybe
-nested :: Maybe (Maybe (Maybe Int))
-nested = Just (Just Nothing)
-
--- |
--- Recursion schemeの醍醐味。
--- Fixはnestedの型のような、再帰した型をまとめることができる。
-flat :: Fix Maybe
-flat = just (just nothing)
-
--- |
--- Maybe-始代数(Fix Maybe, Maybe (Fix Maybe) -> Fix Maybe)は置いておいて、
--- Maybe-代数(Int, Maybe Int -> Int)の`down Nothing`の値を取得する関数。
--- そしてMaybe-始代数(Fix Maybe, Maybe (Fix Maybe) -> Fix Maybe)から
--- Maybe-代数(Int, Maybe Int -> Int)への準同型写像でもある。
-core :: FHomo Maybe (Fix Maybe) Int
-core = cata
 
 -- |
 -- `Cons 10 (Cons 20 (Cons 30 Nil)) :: List' Int (List' Int (List' Int b))`
@@ -152,10 +103,4 @@ flat' :: Fix (List' Int)
 flat' = cons 10 (cons 20 (cons 30 nil)) :: Fix (List' Int)
 
 main :: IO ()
-main = do
-  putStrLn $ "is homoCharToInt a homomorphism?: " <> show isHomoCharIntHomo
-  putStrLn $ "the `down Nothing :: Maybe Int -> Int` value is " <> show (lower core flat)
-  putStrLn $ "the length of `flat'` is " <> show  (lower length flat')
-  where
-    isHomoCharIntHomo :: Bool
-    isHomoCharIntHomo = homoLaw homoCharToInt (Just 'a')
+main = putStrLn $ "the length of `flat'` is " <> show  (lower length flat')
