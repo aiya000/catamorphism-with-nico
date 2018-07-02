@@ -6,17 +6,43 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
--- |
--- あるFunctor fに対する、緩いf-代数の表現と、
+-- | あるfに対するf-代数と、その`List a`-代数の表現
 module Main where
 
-import Data.Char (ord)
 import Data.Semigroup ((<>))
-import Prelude hiding (length)
 
 -- | あるfに対するf-代数(a, f a -> a)の表現
 class Functor f => FAlgebra f a where
-  down :: f a -> a -- ^ あるf a -> aの値（なんでもいい）
+  down :: f a -> a -- ^ あるf a -> aの値
+
+-- |
+-- `Cons 10 (Cons 20 (Cons 30 Nil)) :: List Int (List Int (List Int (List Int b)))`
+-- のように型が再帰するリスト
+data List a b = Nil | Cons a b
+  deriving (Show)
+
+-- | List aがf-代数のfになれるようにする
+instance Functor (List a) where
+  fmap f x = case x of
+    Nil      -> Nil
+    Cons a b -> Cons a (f b)
+
+-- | `List a`-代数 (String, List a String -> String)
+instance FAlgebra (List a) String where
+  down :: List a String -> String
+  down Nil = []
+  down (Cons _ xs) = '0' : xs
+
+-- | `List a`-代数 (Int, List a Int -> Int)
+instance FAlgebra (List a) Int where
+  down :: List a Int -> Int
+  down Nil = 0
+  down (Cons _ n) = n + 1
+
+checkList :: IO ()
+checkList = do
+  let xs = Cons 10 (Cons 20 (Cons 30 Nil)) :: List Int (List Int (List Int (List Int ())))
+  print xs
 
 -- | f-代数aからf-代数bへの準同型写像
 data FHomo f a b = FHomo
@@ -24,12 +50,18 @@ data FHomo f a b = FHomo
   , lower  :: a -> b
   }
 
--- | 準同型写像はある`Functor f`と`a -> b`から導出できる
+-- |
+-- スマートコンストラクタ。
+-- 準同型写像はある`Functor f`と`a -> b`から導出できる。
 fhomo :: Functor f => (a -> b) -> FHomo f a b
 fhomo f = FHomo
             { higher = fmap f
             , lower  = f
             }
+
+-- | `List a`-代数StringからIntの準同型写像
+homoStringToInt :: FHomo (List a) String Int
+homoStringToInt = fhomo length
 
 -- |
 -- `FHomo f a b`の満たすべき法則
@@ -42,6 +74,11 @@ homoLaw FHomo{..} fa =
   let overWay  = lower . down   :: f a -> b
       underWay = down  . higher :: f a -> b
   in overWay fa == underWay fa
+
+checkFHomo :: IO ()
+checkFHomo = do
+  let answer = homoLaw homoStringToInt Nil && homoLaw homoStringToInt (Cons () "xyz")
+  putStrLn $ "Is homoStringToInt a valid homomorphism?: " <> show answer
 
 -- |
 -- f-始代数。
@@ -65,42 +102,29 @@ cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
 
 -- |
--- `Cons 10 (Cons 20 (Cons 30 Nil)) :: List' Int (List' Int (List' Int b))`
--- のように、型も繰り返すようなリスト型
-data List' a b = Nil | Cons a b
+-- catamorphismを用いた、あるaに対する`List a`向けのlengthの実装。
+-- そしてあるaに対する`List a`-始代数`Fix (List a)`から
+-- `List a`-代数(Int, List a Int -> Int)への準同型写像でもある。
+-- （例えばaがIntなら`List Int`-始代数から`List Int`-代数への準同型写像）
+length' :: FHomo (List a) (Fix (List a)) Int
+length' = cata
 
-instance Functor (List' a) where
-   fmap f x = case x of
-     Nil      -> Nil
-     Cons a b -> Cons a (f b)
-
--- | `List' a`-代数(Int, List' a Int -> Int)
-instance FAlgebra (List' a) Int where
-  down :: List' a Int -> Int
-  down Nil = 0
-  down (Cons _ n) = n + 1
+nested :: List Int (List Int (List Int (List Int b)))
+nested = Cons 10 (Cons 20 (Cons 30 Nil))
 
 -- | `[] :: [a]`と同じようなもの
-nil :: Fix (List' a)
+nil :: Fix (List a)
 nil = Fix Nil
 
 -- | `(:) :: a -> [a] -> [a]`と同じようなもの
-cons :: a -> Fix (List' a) -> Fix (List' a)
+cons :: a -> Fix (List a) -> Fix (List a)
 cons x xs = Fix $ Cons x xs
 
--- |
--- catamorphismを用いた、あるaに対する`List' a`向けのlengthの実装。
--- そしてあるaに対する`List' a`-始代数`Fix (List' a)`から
--- `List' a`-代数(Int, List' a Int -> Int)への準同型写像でもある。
--- （例えばaがIntなら`List' Int`-始代数から`List' Int`-代数への準同型写像）
-length :: FHomo (List' a) (Fix (List' a)) Int
-length = cata
-
-nested' :: List' Int (List' Int (List' Int (List' Int b)))
-nested' = Cons 10 (Cons 20 (Cons 30 Nil))
-
-flat' :: Fix (List' Int)
-flat' = cons 10 (cons 20 (cons 30 nil)) :: Fix (List' Int)
+flat :: Fix (List Int)
+flat = cons 10 (cons 20 (cons 30 nil)) :: Fix (List Int)
 
 main :: IO ()
-main = putStrLn $ "the length of `flat'` is " <> show  (lower length flat')
+main = do
+  checkList
+  checkFHomo
+  putStrLn $ "the length is " <> show (lower length' flat)
