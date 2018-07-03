@@ -43,6 +43,8 @@ checkList :: IO ()
 checkList = do
   let xs = Cons 10 (Cons 20 (Cons 30 Nil)) :: List Int (List Int (List Int (List Int ())))
   print xs
+-- {output}
+-- Cons 10 (Cons 20 (Cons 30 Nil))
 
 -- | f-代数aからf-代数bへの準同型写像
 data FHomo f a b = FHomo
@@ -79,6 +81,8 @@ checkFHomo :: IO ()
 checkFHomo = do
   let answer = homoLaw homoStringToInt Nil && homoLaw homoStringToInt (Cons () "xyz")
   putStrLn $ "Is homoStringToInt a valid homomorphism?: " <> show answer
+-- {output}
+-- Is homoStringToInt a valid homomorphism?: True
 
 -- |
 -- f-始代数。
