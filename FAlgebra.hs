@@ -6,7 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
--- | あるfに対するf-代数と、その`List a`-代数の表現
+-- | あるfに対するf-代数と、そのList a-代数の表現
 module Main where
 
 import Data.Semigroup ((<>))
@@ -27,13 +27,13 @@ instance Functor (List a) where
     Nil      -> Nil
     Cons a b -> Cons a (f b)
 
--- | `List a`-代数 (String, List a String -> String)
+-- | List a-代数 (String, List a String -> String)
 instance FAlgebra (List a) String where
   down :: List a String -> String
   down Nil = []
   down (Cons _ xs) = '0' : xs
 
--- | `List a`-代数 (Int, List a Int -> Int)
+-- | List a-代数 (Int, List a Int -> Int)
 instance FAlgebra (List a) Int where
   down :: List a Int -> Int
   down Nil = 0
@@ -61,7 +61,7 @@ fhomo f = FHomo
             , lower  = f
             }
 
--- | `List a`-代数StringからIntの準同型写像
+-- | List a-代数StringからIntの準同型写像
 homoStringToInt :: FHomo (List a) String Int
 homoStringToInt = fhomo length
 
@@ -106,9 +106,9 @@ cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
 
 -- |
--- catamorphismを用いた、あるaに対する`List a`向けのlengthの実装。
--- そしてあるaに対する`List a`-始代数`Fix (List a)`から
--- `List a`-代数(Int, List a Int -> Int)への準同型写像でもある。
+-- catamorphismを用いた、あるaに対するList a向けのlengthの実装。
+-- そしてあるaに対するList a-始代数`Fix (List a)`から
+-- List a-代数(Int, List a Int -> Int)への準同型写像でもある。
 -- （例えばaがIntなら`List Int`-始代数から`List Int`-代数への準同型写像）
 length' :: FHomo (List a) (Fix (List a)) Int
 length' = cata
