@@ -1,5 +1,6 @@
 module Main where
 
+-- | `Fix f`を用いた、`List a`以外の`f`の例示
 import Data.Functor.Identity (Identity(..))
 
 -- | Fix f = f (Fix f)
