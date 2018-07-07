@@ -125,7 +125,7 @@ cons :: a -> Fix (List a) -> Fix (List a)
 cons x xs = Fix $ Cons x xs
 
 flat :: Fix (List Int)
-flat = cons 10 (cons 20 (cons 30 nil)) :: Fix (List Int)
+flat = cons 10 (cons 20 (cons 30 nil))
 
 main :: IO ()
 main = do
