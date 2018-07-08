@@ -141,6 +141,32 @@ cata :: FAlgebra f a => FHomo f (Fix f) a
 cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
 
+{-
+
+-- リスト型に特殊化したfoldr
+foldr :: (a -> b -> b) -> b -> [a] -> b
+
+-- List型に特殊化したcata
+cata :: (List a b -> b) -> Fix (List a) -> a
+
+-- このように`List a b -> b`から`a -> b -> b`への変換ができるので
+unlift :: (List a b -> b) -> (a -> b -> b)
+unlift f = \x xs -> f (Cons x xs)
+
+-- それで置き換える
+cata :: (a -> b -> b) -> Fix (List a) -> a
+
+-- このように`Fix (List a)`を`[a]`に変換できるので
+usual :: Fix (List a) -> [a]
+usual (Fix Nil) = []
+usual (Fix (Cons x xs)) = x : usual xs
+
+-- それで置き換える
+cata :: (a -> b -> b) -> [a] -> a
+
+-}
+
+
 -- |
 -- catamorphismを用いた、あるaに対するIntList向けのlengthの実装。
 -- そしてIntList-始代数`Fix IntList`から
