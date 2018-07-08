@@ -5,8 +5,9 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
--- | あるfに対するf-代数と、そのList a-代数の表現
+-- | あるfに対するf-代数と、そのIntList-代数の表現
 module Main where
 
 import Data.Semigroup ((<>))
@@ -21,27 +22,30 @@ class Functor f => FAlgebra f a where
 data List a b = Nil | Cons a b
   deriving (Show)
 
--- | List aがf-代数のfになれるようにする
-instance Functor (List a) where
+-- | わかりやすさのためにIntに特殊化する
+type IntList = List Int
+
+-- | IntListがf-代数のfになれるようにする
+instance Functor IntList where
   fmap f x = case x of
     Nil      -> Nil
     Cons a b -> Cons a (f b)
 
--- | List a-代数 (String, List a String -> String)
-instance FAlgebra (List a) String where
-  down :: List a String -> String
+-- | IntList-代数 (String, IntList String -> String)
+instance FAlgebra IntList String where
+  down :: IntList String -> String
   down Nil = []
   down (Cons _ xs) = '0' : xs
 
--- | List a-代数 (Int, List a Int -> Int)
-instance FAlgebra (List a) Int where
-  down :: List a Int -> Int
+-- | IntList-代数 (Int, IntList Int -> Int)
+instance FAlgebra IntList Int where
+  down :: IntList Int -> Int
   down Nil = 0
   down (Cons _ n) = n + 1
 
 checkList :: IO ()
 checkList = do
-  let xs = Cons 10 (Cons 20 (Cons 30 Nil)) :: List Int (List Int (List Int (List Int ())))
+  let xs = Cons 10 (Cons 20 (Cons 30 Nil)) :: IntList (IntList (IntList (IntList ())))
   print xs
 -- {output}
 -- Cons 10 (Cons 20 (Cons 30 Nil))
@@ -61,8 +65,8 @@ fhomo f = FHomo
             , lower  = f
             }
 
--- | List a-代数StringからIntの準同型写像
-homoStringToInt :: FHomo (List a) String Int
+-- | IntList-代数StringからIntの準同型写像
+homoStringToInt :: FHomo IntList String Int
 homoStringToInt = fhomo length
 
 -- |
@@ -79,7 +83,7 @@ homoLaw FHomo{..} fa =
 
 checkFHomo :: IO ()
 checkFHomo = do
-  let answer = homoLaw homoStringToInt Nil && homoLaw homoStringToInt (Cons () "xyz")
+  let answer = homoLaw homoStringToInt Nil && homoLaw homoStringToInt (Cons 10 "xyz")
   putStrLn $ "Is homoStringToInt a valid homomorphism?: " <> show answer
 -- {output}
 -- Is homoStringToInt a valid homomorphism?: True
@@ -106,25 +110,24 @@ cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
 
 -- |
--- catamorphismを用いた、あるaに対するList a向けのlengthの実装。
--- そしてあるaに対するList a-始代数`Fix (List a)`から
--- List a-代数(Int, List a Int -> Int)への準同型写像でもある。
--- （例えばaがIntなら`List Int`-始代数から`List Int`-代数への準同型写像）
-length' :: FHomo (List a) (Fix (List a)) Int
+-- catamorphismを用いた、あるaに対するIntList向けのlengthの実装。
+-- そしてIntList-始代数`Fix IntList`から
+-- IntList-代数(Int, IntList Int -> Int)への準同型写像でもある。
+length' :: FHomo IntList (Fix IntList) Int
 length' = cata
 
 -- | Fix版の値構築子Nil
-nil :: Fix (List a)
+nil :: Fix IntList
 nil = Fix Nil
 
 -- | Fix版の値構築子Cons
-cons :: a -> Fix (List a) -> Fix (List a)
+cons :: Int -> Fix IntList -> Fix IntList
 cons x xs = Fix $ Cons x xs
 
-flat :: Fix (List Int)
+flat :: Fix IntList
 flat = cons 10 (cons 20 (cons 30 nil))
 
-nested :: List Int (List Int (List Int (List Int b)))
+nested :: IntList (IntList (IntList (IntList b)))
 nested = Cons 10 (Cons 20 (Cons 30 Nil))
 
 main :: IO ()
