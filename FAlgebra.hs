@@ -113,19 +113,19 @@ cata = homoFixToA
 length' :: FHomo (List a) (Fix (List a)) Int
 length' = cata
 
-nested :: List Int (List Int (List Int (List Int b)))
-nested = Cons 10 (Cons 20 (Cons 30 Nil))
-
--- | `[] :: [a]`と同じようなもの
+-- | Fix版の値構築子Nil
 nil :: Fix (List a)
 nil = Fix Nil
 
--- | `(:) :: a -> [a] -> [a]`と同じようなもの
+-- | Fix版の値構築子Cons
 cons :: a -> Fix (List a) -> Fix (List a)
 cons x xs = Fix $ Cons x xs
 
 flat :: Fix (List Int)
 flat = cons 10 (cons 20 (cons 30 nil))
+
+nested :: List Int (List Int (List Int (List Int b)))
+nested = Cons 10 (Cons 20 (Cons 30 Nil))
 
 main :: IO ()
 main = do
