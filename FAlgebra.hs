@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
@@ -25,6 +26,9 @@ data List a b = Nil | Cons a b
 -- | わかりやすさのためにIntに特殊化する
 type IntList = List Int
 
+xs :: IntList (IntList (IntList (IntList b)))
+xs = Cons 10 (Cons 20 (Cons 30 Nil))
+
 -- | IntListがf-代数のfになれるようにする
 instance Functor IntList where
   fmap _ Nil = Nil
@@ -43,9 +47,7 @@ instance FAlgebra IntList Int where
   down (Cons _ n) = n + 1
 
 checkList :: IO ()
-checkList = do
-  let xs = Cons 10 (Cons 20 (Cons 30 Nil)) :: IntList (IntList (IntList (IntList ())))
-  print xs
+checkList = print (xs @ ()) -- printがshowできるようにするために型引数bを()に指定
 -- {output}
 -- Cons 10 (Cons 20 (Cons 30 Nil))
 
@@ -167,10 +169,7 @@ cata :: (a -> b -> b) -> [a] -> a
 -}
 
 
--- |
--- catamorphismを用いた、あるaに対するIntList向けのlengthの実装。
--- そしてIntList-始代数`Fix IntList`から
--- IntList-代数(Int, IntList Int -> Int)への準同型写像でもある。
+-- | downを固定しているので、再帰の方法をここで示す必要はない
 length' :: FHomo IntList (Fix IntList) Int
 length' = cata
 
@@ -182,14 +181,17 @@ nil = Fix Nil
 cons :: Int -> Fix IntList -> Fix IntList
 cons x xs = Fix $ Cons x xs
 
-flat :: Fix IntList
-flat = cons 10 . cons 20 $ cons 30 nil
+xs' :: Fix IntList
+xs' = cons 10 . cons 20 $ cons 30 nil
 
-nested :: IntList (IntList (IntList (IntList b)))
-nested = Cons 10 (Cons 20 (Cons 30 Nil))
+checkOurCata :: IO ()
+checkOurCata =
+  putStrLn $ "the length is " <> show (lower length' xs')
+-- {output}
+-- the length is 3
 
 main :: IO ()
 main = do
   checkList
   checkFHomo
-  putStrLn $ "the length is " <> show (lower length' flat)
+  checkOurCata
