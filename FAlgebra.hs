@@ -27,9 +27,8 @@ type IntList = List Int
 
 -- | IntListがf-代数のfになれるようにする
 instance Functor IntList where
-  fmap f x = case x of
-    Nil      -> Nil
-    Cons a b -> Cons a (f b)
+  fmap _ Nil = Nil
+  fmap f (Cons x xs) = Cons x $ f xs
 
 -- | IntList-代数 (String, IntList String -> String)
 instance FAlgebra IntList String where
@@ -125,7 +124,7 @@ cons :: Int -> Fix IntList -> Fix IntList
 cons x xs = Fix $ Cons x xs
 
 flat :: Fix IntList
-flat = cons 10 (cons 20 (cons 30 nil))
+flat = cons 10 . cons 20 $ cons 30 nil
 
 nested :: IntList (IntList (IntList (IntList b)))
 nested = Cons 10 (Cons 20 (Cons 30 Nil))
