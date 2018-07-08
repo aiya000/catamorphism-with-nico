@@ -104,7 +104,40 @@ homoFixToA = fhomo f
     f :: Fix f -> a
     f (Fix x) = down $ fmap f x
 
--- | 実はそのhomoFixToAがちょうどcatamorphismです（ドドーン！！）
+{-
+
+-- | catamorphismは右畳み込みを行うための、このような型を持つ
+cata :: Functor f => (f a -> a) -> Fix f -> a
+
+-- | 畳み込みの例
+length' :: Fix IntList -> Int
+length' = cata $ \case
+  Nil       -> 0
+  Cons _ xs -> 1 + xs
+
+-- | 畳み込みの例
+sum' :: Fix IntList -> Int
+sum' = cata $ \case
+  Nil       -> 0
+  Cons x xs -> x + xs
+
+checkCata :: IO ()
+checkCata = do
+  print $ length' xs
+  print $ sum' xs
+-- {output}
+-- 3
+-- 60
+
+-- | `FAlgebra f a`の指定によってそのdownが使えるので、引数で受け取らなくていい
+cata :: FAlgebra f a => Fix f -> a
+
+-- | f-始代数Fix fからf-代数aへの準同型写像FHomo f (Fix f)
+cata :: FAlgebra f a => FHomo f (Fix f) a
+
+-}
+
+-- | 実はhomoFixToAこそがまさにcatamorphismよ（ドドーン！！）
 cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
 
