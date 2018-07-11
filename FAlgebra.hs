@@ -157,7 +157,7 @@ cons :: Int -> Fix IntList -> Fix IntList
 cons x xs = Fix $ Cons x xs
 
 xs' :: Fix IntList
-xs' = cons 10 . cons 20 $ cons 30 nil
+xs' = cons 10 (cons 20 (cons 30 nil))
 
 checkOurCata :: IO ()
 checkOurCata =
