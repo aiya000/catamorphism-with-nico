@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -9,7 +10,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
 -- | あるfに対するf-代数と、そのIntList-代数の表現
-module Main where
+module FAlgebra where
 
 import Data.Semigroup ((<>))
 
@@ -142,32 +143,6 @@ cata :: FAlgebra f a => FHomo f (Fix f) a
 -- | 実はhomoFixToAこそがまさにcatamorphismよ（ドドーン！！）
 cata :: FAlgebra f a => FHomo f (Fix f) a
 cata = homoFixToA
-
-{-
-
--- リスト型に特殊化したfoldr
-foldr :: (a -> b -> b) -> b -> [a] -> b
-
--- List型に特殊化したcata
-cata :: (List a b -> b) -> Fix (List a) -> a
-
--- このように`List a b -> b`から`a -> b -> b`への変換ができるので
-unlift :: (List a b -> b) -> (a -> b -> b)
-unlift f = \x xs -> f (Cons x xs)
-
--- それで置き換える
-cata :: (a -> b -> b) -> Fix (List a) -> a
-
--- このように`Fix (List a)`を`[a]`に変換できるので
-usual :: Fix (List a) -> [a]
-usual (Fix Nil) = []
-usual (Fix (Cons x xs)) = x : usual xs
-
--- それで置き換える
-cata :: (a -> b -> b) -> [a] -> a
-
--}
-
 
 -- | downを固定しているので、再帰の方法をここで示す必要はない
 length' :: FHomo IntList (Fix IntList) Int
