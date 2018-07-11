@@ -8,46 +8,39 @@ import FAlgebra hiding (main)
 
 -- | Fix版の値構築子Identity（これは定義できる）
 identity :: Fix Identity -> Fix Identity
-identity x =
-  (Fix :: Identity (Fix Identity) -> Fix Identity) $
-    (Identity :: Fix Identity -> Identity (Fix Identity)) x
+identity = Fix . Identity
 
--- もとい
--- identity = Fix . Identity
+-- ↑の値構築子の型
+-- Fix      :: Identity (Fix Identity) -> Fix Identity
+-- Identity :: Fix Identity -> Identity (Fix Identity)
+
+{-
 
 -- | Identityは基底部がないので値が定義できない！
--- x :: Fix Identity
--- x = identity (identity (identity (...?)))
+x :: Fix Identity
+x = identity (identity (identity (...??)))
 
--- 脱identity
--- x = Fix (Identity (Fix (Identity (Fix (Identity (...?))))))
+-}
 
 -- | Fix版の値構築子Nothing
 nothing :: Fix Maybe
-nothing =
-  (Fix :: Maybe (Fix Maybe) -> Fix Maybe)
-    (Nothing :: Maybe (Fix Maybe))
+nothing = Fix Nothing
 
--- もとい
--- nothing = Fix Nothing
+-- ↑の値構築子の型
+-- Fix     :: Maybe (Fix Maybe) -> Fix Maybe
+-- Nothing :: Maybe (Fix Maybe)
 
 -- | Fix版の値構築子Just
 just :: Fix Maybe -> Fix Maybe
-just x =
-  (Fix :: Maybe (Fix Maybe) -> Fix Maybe) $
-    (Just :: Fix Maybe -> Maybe (Fix Maybe)) x
+just = Fix . Just
 
--- もとい
--- just = Fix . Just
+-- ↑の値構築子の型
+-- Fix  :: Maybe (Fix Maybe) -> Fix Maybe
+-- Just :: Fix Maybe -> Maybe (Fix Maybe)
 
--- |
--- Fix版（フラット版）の`Just (Just (Just Nothing)) :: Maybe (Maybe (Maybe (Maybe a)))`。
--- 再帰の基底部`Nothing :: forall a. Maybe a`のおかげで、値が定義できた！
+-- | 再帰の基底部`Nothing :: forall a. Maybe a`のおかげで、値が定義できた！
 x :: Fix Maybe
 x = just (just (just nothing))
-
--- 脱nothing, 脱just
--- x = Fix (Just (Fix Nothing))
 
 y :: Fix Maybe
 y = just (just nothing)
