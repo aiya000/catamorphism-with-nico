@@ -1,8 +1,10 @@
--- | `Fix f`を用いた、`List a`以外の`f`の例示
+-- | f-代数のfの例
 module AlgebraExamples where
 
 import Data.Functor.Identity (Identity(..))
 import FAlgebra hiding (main)
+
+{-# ANN module "HLint: ignore Unnecessary hiding" #-}
 
 -- | Fix版の値構築子Identity（これは定義できる）
 identity :: Fix Identity -> Fix Identity
