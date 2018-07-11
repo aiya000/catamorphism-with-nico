@@ -1,12 +1,8 @@
-module Main where
-
 -- | `Fix f`を用いた、`List a`以外の`f`の例示
-import Data.Functor.Identity (Identity(..))
+module AlgebraExamples where
 
--- | Fix f = f (Fix f)
-newtype Fix f = Fix
-  { unFix :: f (Fix f)
-  }
+import Data.Functor.Identity (Identity(..))
+import FAlgebra hiding (main)
 
 -- | Fix版の値構築子Identity（これは定義できる）
 identity :: Fix Identity -> Fix Identity
